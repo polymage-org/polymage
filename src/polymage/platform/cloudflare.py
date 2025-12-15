@@ -1,4 +1,3 @@
-import os
 import random
 import requests
 from typing import Any
@@ -25,12 +24,14 @@ MODELS_SETTINGS = {
 }
 
 class CloudflarePlatform(Platform):
-    def __init__(self, **kwargs):
-        super().__init__("cloudflare", **kwargs)
+    def __init__(self, api_id: str, api_key: str, **kwargs):
+        super().__init__('cloudflare', **kwargs)
+        self._api_id = api_id
+        self._api_key = api_key
 
     def _text2image(self, model: str, prompt: str, **kwargs) -> ImageMedia:
-        CLOUDFLARE_ID = os.environ['CLOUDFLARE_ID']
-        CLOUDFLARE_TOKEN = os.environ['CLOUDFLARE_TOKEN']
+        CLOUDFLARE_ID = self._api_id
+        CLOUDFLARE_TOKEN = self._api_key
 
         payload = MODELS_SETTINGS[model]
         random_seed = random.randint(0, 2 ** 32 - 1)
@@ -55,7 +56,7 @@ class CloudflarePlatform(Platform):
             #print(f"CloudFlare result = {result}")
             base64_string = result['result']['image']
             image = base64_to_image(base64_string)
-            return ImageMedia(image, {'plaform': self._name, 'model': model, 'prompt': prompt})
+            return ImageMedia(image, {'Software': f"{self._name}/{model}", 'Description': prompt})
         except Exception as e:
             RuntimeError(f"CloudFlare error: {e}")
 

@@ -1,7 +1,11 @@
+from typing import Optional, List
+from pydantic import BaseModel
+from PIL import Image
 from groq import Groq
 
-from src.polymage.platform.platform import Platform
-
+from ..media.media import Media
+from ..media.image_media import ImageMedia
+from .platform import Platform
 
 """
 groq platform
@@ -13,40 +17,86 @@ you can find the list of supported models here : https://console.groq.com/docs/m
 
 class GroqPlatform(Platform):
     def __init__(self, api_key: str, **kwargs):
-        super().__init__("groq", api_key=api_key, **kwargs)
-        self.client = Groq(api_key=api_key)
+        super().__init__('groq', **kwargs)
+        self._api_key = api_key
 
-    def _text2text(self, model: str, prompt: str) -> str:
-        messages = []
-        messages.append({"role": "user", "content": prompt})
-        #
-        # TODO manage system prompt
-        #
-        #if agent.system_prompt:
-        #    messages.append({"role": "system", "content": agent.system_prompt})
+    def _text2text(self, model: str, prompt: str, media: Optional[List[Media]] = None, response_model: Optional[BaseModel] = None, **kwargs) -> str:
+        system_prompt: Optional[str] = kwargs.get("system_prompt", "You are a helpful assistant.")
+        client = Groq(api_key=self._api_key)
+        chat_completion = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt},
+            ],
+        )
+        print(f"Groq text2text : {chat_completion.choices[0].message}")
+        return chat_completion.choices[0].message.content.strip()
 
-        try:
-            response = self.client.chat.completions.create(
-                model=model,
-                messages=messages,
-                # Controls randomness: lowering results in less random completions.
-                # As the temperature approaches zero, the model will become deterministic
-                # and repetitive.
-                temperature=0.8,
-                # The maximum number of tokens to generate. Requests can use up to
-                # 32,768 tokens shared between prompt and completion.
-                max_tokens=4096,
-                # Controls diversity via nucleus sampling: 0.5 means half of all
-                # likelihood-weighted options are considered.
-                top_p=1,
-                # A stop sequence is a predefined or user-specified text string that
-                # signals an AI to stop generating content, ensuring its responses
-                # remain focused and concise. Examples include punctuation marks and
-                # markers like "[end]".
-                stop=None,
-                # If set, partial message deltas will be sent.
-                stream=False,
-            )
-            return response.choices[0].message.content or ""
-        except Exception as e:
-            raise RuntimeError(f"Groq API error: {e}")
+
+    def _text2data(self, model: str, prompt: str, media: Optional[List[Media]] = None, response_model: Optional[BaseModel] = None, **kwargs) -> str:
+        system_prompt: Optional[str] = kwargs.get("system_prompt", "You are a helpful assistant.")
+        client = Groq(api_key=self._api_key)
+        chat_completion = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt}
+            ],
+            response_format={
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "UserProfile",
+                    "schema": response_model,
+                },
+            },
+            temperature=0.8,
+        )
+        print(f"Groq text2data : {chat_completion.choices[0].message}")
+        return chat_completion.choices[0].message.content.strip()
+
+
+    def _image2text(self, model: str, prompt: str, media: List[ImageMedia], **kwargs) -> str:
+        client = Groq(api_key=self._api_key)
+        if len(media) == 0:
+            return ""
+        else:
+            image = media[0]
+            base64_image = image.to_base64()
+
+        chat_completion = client.chat.completions.create(
+            model=model,
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{base64_image}",
+                            },
+                        },
+                    ],
+                }
+            ],
+            temperature=1,
+            max_completion_tokens=1024,
+            top_p=1,
+            stream=False,
+            stop=None,
+        )
+        print(f"Groq image2text : {chat_completion.choices[0].message}")
+        return chat_completion.choices[0].message.content.strip()
+
+
+    def _text2image(self, model: str, prompt: str, **kwargs) -> Image.Image:
+        """Not supported"""
+        pass
+
+
+    def _image2image(self, model: str, prompt: str, image: Image.Image, **kwargs) -> Image.Image:
+        """Not supported"""
+        pass
+
+

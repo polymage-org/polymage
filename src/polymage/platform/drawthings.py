@@ -133,7 +133,7 @@ class DrawThingsPlatform(Platform):
             json_data = response.json()
             base64_string = json_data["images"][0]
             image = image_to_base64(base64_string)
-            return ImageMedia(image, {'plaform': "DrawThings", 'model': model, 'prompt': prompt})
+            return ImageMedia(image, {'plaform': self._name, 'model': model, 'prompt': prompt})
         except Exception as e:
             raise RuntimeError(f"DrawThings error: {e}")
 

@@ -61,6 +61,7 @@ class ImageMedia(Media):
 
     def save_to_file(self, filepath: str) -> None:
         metadata = self._metadata
+        self._image.load()  # Ensures image is fully loaded
         file_metameta = PngInfo()
         if metadata is not None:
             for key, value in metadata.items():

@@ -11,15 +11,16 @@ from ..platform.platform import Platform
 
 class LMStudioPlatform(Platform):
 	def __init__(self, host: str = "127.0.0.1:1234", **kwargs):
-		super().__init__("lmstudio", **kwargs)
-		self.host = host
+		super().__init__('lmstudio', **kwargs)
+		self._host = host
+		self._api_key = "lm-studio"  # Dummy key (LM Studio doesn't require real keys)
 
 
 	def _text2text(self, model: str, prompt: str, media: Optional[List[Media]] = None, response_model: Optional[BaseModel] = None, **kwargs) -> str:
 		system_prompt: Optional[str] = kwargs.get("system_prompt", "")
 		client = OpenAI(
-				base_url="http://localhost:1234/v1",  # LM Studio's default endpoint
-				api_key="lm-studio"  # Dummy key (LM Studio doesn't require real keys)
+				base_url=f"http://{self._host}/v1",  # LM Studio's default endpoint
+				api_key=self._api_key
 			)
 		response = client.chat.completions.create(
 			model=model,  # e.g., "gpt-4o" or local model like "llama-3"
@@ -32,11 +33,11 @@ class LMStudioPlatform(Platform):
 		return response.choices[0].message.content.strip()
 
 
-	def _text2data(self, model: str, prompt: str, media: Optional[List[Media]] = None, response_model: Optional[BaseModel] = None, **kwargs) -> BaseModel:
+	def _text2data(self, model: str, prompt: str, media: Optional[List[Media]] = None, response_model: Optional[BaseModel] = None, **kwargs) -> str:
 		system_prompt: Optional[str] = kwargs.get("system_prompt", "")
 		client = OpenAI(
-				base_url="http://localhost:1234/v1",  # LM Studio's default endpoint
-				api_key="lm-studio"  # Dummy key (LM Studio doesn't require real keys)
+				base_url=f"http://{self._host}/v1",  # LM Studio's default endpoint
+				api_key=self._api_key
 		)
 		response = client.chat.completions.create(
 			model=model,  # e.g., "gpt-4o" or local model like "llama-3"
