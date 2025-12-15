@@ -1,6 +1,6 @@
 from groq import Groq
 
-from src.polymage.platform.platfom import Platform
+from src.polymage.platform.platform import Platform
 
 
 """

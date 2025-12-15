@@ -1,8 +1,12 @@
 import os
 import random
 import requests
+from typing import Any
+from pydantic import BaseModel
+from PIL import Image
 
-from src.polymage.platform.platfom import Platform
+from .platform import Platform
+from ..media.image_media import ImageMedia, base64_to_image, image_to_base64
 
 
 """
@@ -12,15 +16,28 @@ Clouflare support LLm and some other multimedia models
 you can find the list of supported models here : https://developers.cloudflare.com/workers-ai/models/
 """
 
+flux_schnell_settings = {
+    "steps": 5,
+}
+
+MODELS_SETTINGS = {
+    "flux-1-schnell": flux_schnell_settings,
+}
 
 class CloudflarePlatform(Platform):
     def __init__(self, **kwargs):
         super().__init__("cloudflare", **kwargs)
 
-    def _text2image(self, agent: Agent, model: str, prompt: str) -> str:
+    def _text2image(self, model: str, prompt: str, **kwargs) -> ImageMedia:
         CLOUDFLARE_ID = os.environ['CLOUDFLARE_ID']
         CLOUDFLARE_TOKEN = os.environ['CLOUDFLARE_TOKEN']
+
+        payload = MODELS_SETTINGS[model]
         random_seed = random.randint(0, 2 ** 32 - 1)
+
+        payload["prompt"] = prompt
+        payload["seed"] = random_seed
+
         url = "https://api.cloudflare.com/client/v4/accounts/" + CLOUDFLARE_ID + "/ai/run/@cf/black-forest-labs/flux-1-schnell"
         headers = {
             'Content-Type': 'application/json',
@@ -35,9 +52,30 @@ class CloudflarePlatform(Platform):
             response = requests.post(url, headers=headers, json=data)
             response.raise_for_status()  # Raise an exception for HTTP errors
             result = response.json()
-            #print(f"RESULT = {result}")
-            return result['result']['image']
-
+            #print(f"CloudFlare result = {result}")
+            base64_string = result['result']['image']
+            image = base64_to_image(base64_string)
+            return ImageMedia(image, {'plaform': self._name, 'model': model, 'prompt': prompt})
         except Exception as e:
-            print(f"Error generating image: {e}")
-            raise
+            RuntimeError(f"CloudFlare error: {e}")
+
+
+    def _image2image(self, model: str, prompt: str, image: Image.Image, **kwargs) -> ImageMedia:
+        pass
+
+    def _text2text(self, model: str, prompt: str, **kwargs) -> Any:
+        """Not supported"""
+        pass
+
+    def _text2data(self, model: str, response_model: BaseModel, prompt: str, **kwargs) -> Any:
+        """Not supported"""
+        pass
+
+    def _image2text(self, model: str, prompt: str, image: Image.Image, **kwargs) -> str:
+        """Not supported"""
+        pass
+
+    def _image2data(self, model: str, response_model: BaseModel, prompt: str, image: Image.Image, **kwargs) -> Any:
+        """Not supported"""
+        pass
+

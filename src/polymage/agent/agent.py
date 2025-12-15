@@ -1,7 +1,9 @@
-from abc import ABC
-from typing import Any, Optional
+from abc import ABC, abstractmethod
+from typing import Any, Optional, List
+from pydantic import BaseModel
 
-from polymage.platform.platfom import Platform
+from ..media.media import Media
+from ..platform.platform import Platform
 
 
 class Agent(ABC):
@@ -9,16 +11,15 @@ class Agent(ABC):
 			self,
 			platform: Platform,
 			model: str,
+			response_model: Optional[BaseModel] = None,
 			system_prompt: Optional[str] = None,
 	):
 		self.platform=platform
 		self.model=model
-		self.system_prompt=system_prompt or ""
+		self.response_model=response_model
+		self.system_prompt=system_prompt
 
-	def run(self, prompt: str, **kwargs) -> Any:
-		platform=self.platform
-		model=self.model
-		system_prompt=self.system_prompt
 
-		return platform.generate(model=model, prompt=prompt, system_prompt=system_prompt, **kwargs)
-
+	@abstractmethod
+	def run(self, prompt: str, media: Optional[List[Media]] = None, **kwargs) -> Any:
+		pass
