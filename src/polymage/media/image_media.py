@@ -11,6 +11,28 @@ from .media import Media
 # Conversion utils
 #
 def base64_to_image(base64_string: str) -> Image.Image:
+    """
+    Convert a base64 encoded string to a PIL Image object.
+
+    This function decodes a base64 string representation of an image and converts it
+    into a PIL (Pillow) Image object that can be manipulated or saved.
+
+    Args:
+        base64_string (str): Base64 encoded string representing an image
+
+    Returns:
+        PIL.Image.Image: A PIL Image object created from the base64 data
+
+    Example:
+        # Convert base64 string to image
+        image = base64_to_image("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==")
+
+        # Save the image
+        image.save('output.png')
+
+    Note:
+        The function supports any image format that PIL can handle (PNG, JPEG, etc.)
+    """
     # Decode the base64 string to bytes
     image_bytes = base64.b64decode(base64_string)
     # Create a BytesIO object from the decoded bytes
@@ -22,6 +44,31 @@ def base64_to_image(base64_string: str) -> Image.Image:
 
 
 def image_to_base64(image: Image.Image, format='PNG') -> str:
+    """
+    Convert a PIL Image object to a base64 encoded string.
+
+    This function takes a PIL Image object and converts it to a base64 encoded string
+    which can be used for embedding images in HTML, JSON responses, or other text-based formats.
+
+    Args:
+        image (PIL.Image.Image): The PIL Image object to convert
+        format (str, optional): The image format to use for encoding. Defaults to 'PNG'.
+                               Common formats include 'PNG', 'JPEG', 'GIF'.
+
+    Returns:
+        str: Base64 encoded string representation of the image
+
+    Example:
+        from PIL import Image
+        # Load an image
+        img = Image.open('example.jpg')
+        # Convert to base64
+        base64_string = image_to_base64(img, 'JPEG')
+
+    Note:
+        The function uses BytesIO for efficient in-memory image handling and
+        returns a UTF-8 decoded base64 string ready for use in text-based protocols.
+    """
     # Input is a PIL Image object
     buffered = BytesIO()
     image.save(buffered, format=format)
@@ -32,14 +79,37 @@ def image_to_base64(image: Image.Image, format='PNG') -> str:
 class ImageMedia(Media):
     """
     Image media class using Pillow as internal representation.
+
+    This class provides a wrapper around PIL (Pillow) Image objects to handle image media
+    with additional functionality for base64 encoding and metadata management.
+
+    Attributes:
+        _image (PIL.Image.Image): Internal PIL Image object
+        _metadata (Optional[dict]): Metadata associated with the image
+
+    Example:
+        from PIL import Image
+        pil_img = Image.open('image.jpg')
+        image_media = ImageMedia(pil_img, {'author': 'John Doe'})
+
+        # Convert to base64
+        base64_data = image_media.to_base64()
+
+        # Save with metadata
+        image_media.save_to_file('output.png')
     """
-    
+
     def __init__(self, pil_image: Image.Image, metadata: Optional[dict] = None, **kwargs):
         """
         Initialize with a PIL Image object.
-        
+
         Args:
             pil_image: PIL Image object
+            metadata (Optional[dict]): Metadata dictionary to associate with the image
+            **kwargs: Additional keyword arguments
+
+        Raises:
+            TypeError: If pil_image is not a PIL.Image.Image object
         """
         if not isinstance(pil_image, Image.Image):
             raise TypeError("Expected PIL.Image.Image object")
@@ -48,6 +118,18 @@ class ImageMedia(Media):
 
 
     def to_base64(self, format='PNG') -> str:
+        """
+        Convert the image to a base64 encoded string.
+
+        Args:
+            format (str): Image format for encoding (default: 'PNG')
+
+        Returns:
+            str: Base64 encoded string representation of the image
+
+        Example:
+            base64_str = image_media.to_base64('JPEG')
+        """
         # Create an in-memory bytes buffer
         buffer = BytesIO()
         # Save the image to the buffer in the specified format
@@ -60,6 +142,15 @@ class ImageMedia(Media):
 
 
     def save_to_file(self, filepath: str) -> None:
+        """
+        Save the image to a file with metadata support.
+
+        Args:
+            filepath (str): Path where the image should be saved
+
+        Example:
+            image_media.save_to_file('output.png')
+        """
         metadata = self._metadata
         self._image.load()  # Ensures image is fully loaded
         file_metameta = PngInfo()
@@ -68,5 +159,3 @@ class ImageMedia(Media):
                 file_metameta.add_text(key, value)
         # save to file
         self._image.save(filepath, pnginfo=file_metameta)
-
-
