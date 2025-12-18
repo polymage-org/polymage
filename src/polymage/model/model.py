@@ -1,17 +1,23 @@
 from abc import ABC
-from typing import Dict, Optional, Any
+from typing import Dict, List, Any
 
 
 class Model(ABC):
-    name: str
-    type: str  # e.g., "text2text", "text2image", "image2image"
-    default_params: Dict[str, Any]
 
-    def __init__(self, name: str, type: str, **overrides):
-        self.name = name
-        self.type = type
-        self.params = {**self.default_params, **overrides}
+    def __init__(self, name: str, internal_name: str, capabilities: List[str], default_params:Dict[str, Any], **kwargs):
+        self._name = name
+        self._internal_name = internal_name
+        self._capabilities = capabilities
+        self._default_params = default_params
 
-    def get_payload(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Build platform-agnostic payload (agent may further modify)."""
-        raise NotImplementedError
+    def model_name(self) -> str:
+        return self._name
+
+    def model_internal_name(self) -> str:
+        return self._internal_name
+
+    def model_capabilities(self) -> List[str]:
+        return self._capabilities
+
+    def model_default_params(self) -> Dict[str, Any]:
+        return self._default_params

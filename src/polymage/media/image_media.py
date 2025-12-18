@@ -3,9 +3,8 @@ import base64
 from io import BytesIO
 from PIL import Image
 from PIL.PngImagePlugin import PngInfo
-from typing import Optional
+from typing import Optional, Dict, Any, Union
 from .media import Media
-
 
 #
 # Conversion utils
@@ -40,6 +39,11 @@ def base64_to_image(base64_string: str) -> Image.Image:
     # Open the image using PIL
     image = Image.open(image_buffer)
     # return a PIL Image object
+    return image
+
+
+def bytes_to_image(image_bytes: bytes) -> Image.Image:
+    image = Image.open(BytesIO(image_bytes))
     return image
 
 
@@ -99,22 +103,17 @@ class ImageMedia(Media):
         image_media.save_to_file('output.png')
     """
 
-    def __init__(self, pil_image: Image.Image, metadata: Optional[dict] = None, **kwargs):
-        """
-        Initialize with a PIL Image object.
-
-        Args:
-            pil_image: PIL Image object
-            metadata (Optional[dict]): Metadata dictionary to associate with the image
-            **kwargs: Additional keyword arguments
-
-        Raises:
-            TypeError: If pil_image is not a PIL.Image.Image object
-        """
-        if not isinstance(pil_image, Image.Image):
-            raise TypeError("Expected PIL.Image.Image object")
-        self._image = pil_image
+    def __init__(self, image_data: Union[str, bytes, Image.Image], metadata: Optional[Dict[str, Any]] = None, **kwargs):
         self._metadata = metadata
+        # Auto-detect based on type
+        if isinstance(image_data, str):
+            self._image = base64_to_image(image_data)
+        elif isinstance(image_data, bytes):
+            self._image = bytes_to_image(image_data)
+        elif isinstance(image_data, Image.Image):
+            self._image = image_data
+        else:
+            raise TypeError("image_data must be either a Pillow Image or base64-encoded string or raw bytes.")
 
 
     def to_base64(self, format='PNG') -> str:
