@@ -1,13 +1,20 @@
-from abc import ABC, abstractmethod
+import json
+import logging
 from typing import Optional, List, Any
 from openai import OpenAI
 from pydantic import BaseModel
 from PIL import Image
+from tenacity import retry, stop_after_attempt, retry_if_exception_type
 
 from ..model.model import Model
 from ..media.media import Media
 from ..media.image_media import ImageMedia
 from ..platform.platform import Platform
+
+
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
+
 
 gemma_3_27b = Model(
     name= "gemma-3-27b",
@@ -53,13 +60,22 @@ class LMStudioPlatform(Platform):
 		return response.choices[0].message.content.strip()
 
 
-	def _text2data(self, model: Model, prompt: str, media: Optional[List[Media]] = None, response_model: Optional[BaseModel] = None, **kwargs) -> str:
+	#
+	# using structured data may sometime fail, because the result is not a valid JSON
+	# if the JSON is not valid, retry 3 times
+	#
+	@retry(retry=retry_if_exception_type(json.JSONDecodeError), stop=stop_after_attempt(3))
+	def _text2data(self, model: Model, prompt: str, response_model: BaseModel, media: Optional[List[Media]] = None, **kwargs) -> str:
 		system_prompt: Optional[str] = kwargs.get("system_prompt", "")
 		client = OpenAI(
 				base_url=f"http://{self._host}/v1",  # LM Studio's default endpoint
 				api_key=self._api_key
 		)
-		response = client.chat.completions.create(
+
+		json_schema = response_model.model_json_schema()
+		json_schema_name = json_schema['title']
+
+		chat_completion = client.chat.completions.create(
 			model=model.model_internal_name(),
 			messages=[
 				{"role": "system", "content": system_prompt},
@@ -68,44 +84,15 @@ class LMStudioPlatform(Platform):
 			response_format={
 				"type": "json_schema",
 				"json_schema": {
-					"name": "UserProfile",
-					"schema": response_model,
+					"name": json_schema_name,
+					"schema": json_schema,
 				},
 			},
 			temperature=0.8,
 		)
-		return response.choices[0].message.content.strip()
-
-
-	"""
-	#
-	# does not work (for now) with Instructor
-	#
-	def _text2data(self, model: Model, prompt: str, media: Optional[List[Media]] = None, response_model: Optional[BaseModel] = None, **kwargs) -> BaseModel:
-		system_prompt: Optional[str] = kwargs.get("system_prompt", "")
-
-		# Patch the OpenAI client with Instructor
-		client = instructor.from_openai(
-			OpenAI(
-				base_url="http://localhost:1234/v1",  # LM Studio's default endpoint
-				api_key="lm-studio"  # Dummy key (LM Studio doesn't require real keys)
-			),
-			tool_choice="auto",
-			#mode=instructor.Mode.JSON,
-		)
-		# use structured response model
-		response_data = client.chat.completions.create(
-			model=model.model_internal_name(),
-			# the data model to use
-			messages=[
-				{"role": "system", "content": system_prompt},
-				{"role": "user", "content": prompt}
-			],
-			response_model=response_model,
-			max_retries=3,  # Auto-retry on validation failures
-		)
-		return response_data
-	"""
+		json_string = chat_completion.choices[0].message.content.strip()
+		# return a python Dict
+		return json.loads(json_string)
 
 
 	def _image2text(self, model: Model, prompt: str, media: List[ImageMedia], **kwargs) -> str:

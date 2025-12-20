@@ -1,9 +1,12 @@
+import logging
 from typing import Any, Optional, List
 from pydantic import BaseModel
 
 from .agent import Agent
 from ..media.media import Media
 
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 class InstructAgent(Agent):
 	"""

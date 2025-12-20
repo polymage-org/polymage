@@ -1,3 +1,4 @@
+import logging
 from abc import ABC, abstractmethod
 from typing import List, Dict, Optional, Any
 from pydantic import BaseModel
@@ -6,6 +7,8 @@ from ..model.model import Model
 from ..media.media import Media
 from ..media.image_media import ImageMedia
 
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 class Platform(ABC):
 	def __init__(self, name: str, models: List[Model], **kwargs):
@@ -58,7 +61,7 @@ class Platform(ABC):
 		pass
 
 	@abstractmethod
-	def _text2data(self, model: Model, prompt: str, response_model: str, media: Optional[List[Media]] = None, **kwargs) -> Any:
+	def _text2data(self, model: Model, prompt: str, response_model: str, media: Optional[List[Media]] = None, **kwargs) -> Dict[str, Any]:
 		"""Platform-specific execution interface for text-to-structured data conversion"""
 		pass
 

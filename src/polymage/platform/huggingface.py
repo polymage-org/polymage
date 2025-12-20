@@ -3,7 +3,7 @@ import logging
 from typing import Optional, List
 from pydantic import BaseModel
 from PIL import Image
-from groq import Groq
+from huggingface_hub import InferenceClient
 from tenacity import retry, stop_after_attempt, retry_if_exception_type, wait_random_exponential
 
 from ..model.model import Model
@@ -12,62 +12,58 @@ from ..media.image_media import ImageMedia
 from .platform import Platform
 
 """
-groq platform
-
-groq support LLm and audio2text models
-you can find the list of supported models here : https://console.groq.com/docs/models
+Huggingface platform
 """
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-gpt_oss_20b = Model(
-    name= "gpt-oss-20b",
-    internal_name= "openai/gpt-oss-20b",
-    capabilities = ["text2text"],
+SmolLM3_3b = Model(
+    name= "SmolLM3-3b",
+    internal_name= "HuggingFaceTB/SmolLM3-3B:hf-inference",
+    capabilities = ["text2text","text2data"],
     default_params = {
     }
 )
 
-gpt_oss_120b = Model(
-    name= "gpt-oss-120b",
-    internal_name= "openai/gpt-oss-120b",
-    capabilities = ["text2text"],
-    default_params = {
-    }
+flux_1_schnell = Model(
+	name="flux-1-schnell",
+	internal_name="black-forest-labs/FLUX.1-schnell",
+	capabilities=["text2image"],
+	default_params={
+	},
 )
 
-Qwen3_32b = Model(
-    name= "Qwen3-32b",
-    internal_name= "qwen/qwen3-32b",
-    capabilities = ["text2text"],
-    default_params = {
-    }
+stable_diffusion_3_medium = Model(
+    name="stable-diffusion-3-medium",
+    internal_name="stabilityai/stable-diffusion-3-medium-diffusers",
+    capabilities=["text2image"],
+    default_params={
+    },
 )
 
-llama_4_scout_17b_16e_instruct = Model(
-    name= "llama-4-scout-17b-16e-instruct",
-    internal_name= "meta-llama/llama-4-scout-17b-16e-instruct",
-    capabilities = ["text2text", "image2text"],
-    default_params = {
-    }
-)
 
-class GroqPlatform(Platform):
+class HuggingFacePlatform(Platform):
     def __init__(self, api_key: str, **kwargs):
-        super().__init__('groq', list((gpt_oss_20b, gpt_oss_120b, Qwen3_32b, llama_4_scout_17b_16e_instruct)), **kwargs)
+        super().__init__('groq', list((SmolLM3_3b, flux_1_schnell, stable_diffusion_3_medium)), **kwargs)
         self._api_key = api_key
 
 
     def _text2text(self, model: Model, prompt: str, media: Optional[List[Media]] = None, response_model: Optional[BaseModel] = None, **kwargs) -> str:
         system_prompt: Optional[str] = kwargs.get("system_prompt", "You are a helpful assistant.")
-        client = Groq(api_key=self._api_key)
-        chat_completion = client.chat.completions.create(
-            model=model.platform_name(),
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": prompt},
-            ],
-        )
+        client = InferenceClient(api_key=self._api_key)
+
+        try:
+            chat_completion = client.chat.completions.create(
+                model=model.model_internal_name(),
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": prompt},
+                ],
+            )
+        except:
+            logging.error("API call failed", exc_info=True)
+            raise
+
         return chat_completion.choices[0].message.content.strip()
 
     #
@@ -77,7 +73,7 @@ class GroqPlatform(Platform):
     @retry(retry=retry_if_exception_type(json.JSONDecodeError), stop=stop_after_attempt(3), wait=wait_random_exponential(multiplier=3))
     def _text2data(self, model: Model, prompt: str, response_model: BaseModel, media: Optional[List[Media]] = None, **kwargs) -> str:
         system_prompt: Optional[str] = kwargs.get("system_prompt", "You are a helpful assistant.")
-        client = Groq(api_key=self._api_key)
+        client = InferenceClient(api_key=self._api_key)
 
         json_schema = response_model.model_json_schema()
         json_schema_name = json_schema['title']
@@ -108,46 +104,24 @@ class GroqPlatform(Platform):
 
 
     def _image2text(self, model: Model, prompt: str, media: List[ImageMedia], **kwargs) -> str:
-        client = Groq(api_key=self._api_key)
-        if len(media) == 0:
-            return ""
-        else:
-            image = media[0]
-            base64_image = image.to_base64()
-
-        try:
-            chat_completion = client.chat.completions.create(
-                model=model.model_internal_name(),
-                messages=[
-                    {
-                        "role": "user",
-                        "content": [
-                            {"type": "text", "text": prompt},
-                            {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:image/jpeg;base64,{base64_image}",
-                                },
-                            },
-                        ],
-                    }
-                ],
-                temperature=1,
-                max_completion_tokens=1024,
-                top_p=1,
-                stream=False,
-                stop=None,
-            )
-        except Exception as e:
-            logging.error("API call failed", exc_info=True)
-            raise
-
-        return chat_completion.choices[0].message.content.strip()
+        """Not supported"""
+        pass
 
 
     def _text2image(self, model: Model, prompt: str, **kwargs) -> Image.Image:
-        """Not supported"""
-        pass
+        client = InferenceClient(provider="hf-inference", api_key=self._api_key)
+
+        # output is a PIL.Image object
+        try:
+            image = client.text_to_image(
+                prompt,
+                model=model.model_internal_name(),
+            )
+        except:
+            logging.error("API call failed", exc_info=True)
+            raise
+
+        return ImageMedia(image, {'Software': f"{self.platform_name()}/{model.model_name()}"})
 
 
     def _image2image(self, model: Model, prompt: str, image: Image.Image, **kwargs) -> Image.Image:

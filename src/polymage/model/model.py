@@ -9,12 +9,17 @@ class Model(ABC):
         self._internal_name = internal_name
         self._capabilities = capabilities
         self._default_params = default_params
+        self._output_type = kwargs.get("output_type", "str")
+
 
     def model_name(self) -> str:
         return self._name
 
     def model_internal_name(self) -> str:
         return self._internal_name
+
+    def model_output_type(self) -> str:
+        return self._output_type
 
     def model_capabilities(self) -> List[str]:
         return self._capabilities
