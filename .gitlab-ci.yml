@@ -1,1 +1,12 @@
+include:
+  - template: Security/SAST.gitlab-ci.yml
 
+variables:
+  VERSION: '0.0.2'
+
+stages:
+  - scan
+# - build
+
+sast:
+  stage: scan
