@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Optional, List
+from typing import Optional, List, Any
 from pydantic import BaseModel
 from PIL import Image
 from groq import Groq
@@ -53,12 +53,12 @@ llama_4_scout_17b_16e_instruct = Model(
 )
 
 class GroqPlatform(Platform):
-    def __init__(self, api_key: str, **kwargs):
+    def __init__(self, api_key: str, **kwargs: Any) -> None:
         super().__init__('groq', list((gpt_oss_20b, gpt_oss_120b, Qwen3_32b, llama_4_scout_17b_16e_instruct)), **kwargs)
         self._api_key = api_key
 
 
-    def _text2text(self, model: Model, prompt: str, media: Optional[List[Media]] = None, response_model: Optional[BaseModel] = None, **kwargs) -> str:
+    def _text2text(self, model: Model, prompt: str, media: Optional[List[Media]] = None, response_model: Optional[BaseModel] = None, **kwargs: Any) -> str:
         system_prompt: Optional[str] = kwargs.get("system_prompt", "You are a helpful assistant.")
         client = Groq(api_key=self._api_key)
         chat_completion = client.chat.completions.create(
@@ -75,7 +75,7 @@ class GroqPlatform(Platform):
     # if the JSON is not valid, retry 3 times
     #
     @retry(retry=retry_if_exception_type(json.JSONDecodeError), stop=stop_after_attempt(3), wait=wait_random_exponential(multiplier=3))
-    def _text2data(self, model: Model, prompt: str, response_model: BaseModel, media: Optional[List[Media]] = None, **kwargs) -> str:
+    def _text2data(self, model: Model, prompt: str, response_model: BaseModel, media: Optional[List[Media]] = None, **kwargs: Any) -> str:
         system_prompt: Optional[str] = kwargs.get("system_prompt", "You are a helpful assistant.")
         client = Groq(api_key=self._api_key)
 
@@ -107,7 +107,7 @@ class GroqPlatform(Platform):
         return json.loads(json_string)
 
 
-    def _image2text(self, model: Model, prompt: str, media: List[ImageMedia], **kwargs) -> str:
+    def _image2text(self, model: Model, prompt: str, media: List[ImageMedia], **kwargs: Any) -> str:
         client = Groq(api_key=self._api_key)
         if len(media) == 0:
             return ""
@@ -145,12 +145,12 @@ class GroqPlatform(Platform):
         return chat_completion.choices[0].message.content.strip()
 
 
-    def _text2image(self, model: Model, prompt: str, **kwargs) -> Image.Image:
+    def _text2image(self, model: Model, prompt: str, **kwargs: Any) -> Image.Image:
         """Not supported"""
         pass
 
 
-    def _image2image(self, model: Model, prompt: str, image: Image.Image, **kwargs) -> Image.Image:
+    def _image2image(self, model: Model, prompt: str, image: Image.Image, **kwargs: Any) -> Image.Image:
         """Not supported"""
         pass
 

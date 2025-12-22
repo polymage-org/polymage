@@ -1,0 +1,22 @@
+site_name: polymage.org
+site_url: https://docs.polymage.org/
+theme:
+  name: readthedocs
+
+# Plugins
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            paths: [src]
+            docstring_style: google
+            show_root_heading: true
+            show_submodules: true
+            heading_level: 3
+
+nav:
+  - Home: index.md
+  - API Reference:
+      - polymage: api.md  # will be auto-generated

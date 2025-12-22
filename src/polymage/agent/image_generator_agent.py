@@ -15,30 +15,14 @@ image generator agent
 
 class ImageGeneratorAgent(Agent):
 	"""
-	An agent responsible for generating captions or descriptions for images.
-
-	This class inherits from Agent and provides functionality to convert image
-	content into text descriptions using a specified platform and model. It leverages
-	the platform's image-to-text capabilities to process media files and generate
-	relevant textual output based on the provided prompt.
-
-	The agent utilizes the platform's `image2text` method to perform the actual
-	image-to-text conversion, making it suitable for tasks such as image captioning,
-	visual description generation, or content analysis of media files.
-
-	Example usage:
-		agent = ImageCaptionerAgent()
-		result = agent.run(prompt="Describe this image", media=[image_file])
-
-	Attributes:
-		Inherits all attributes from the parent Agent class.
+	An agent responsible for generating images.
 	"""
 
 	def __init__(self, **kwargs):
 		super().__init__(**kwargs)
 
 
-	def run(self, prompt: str, media: Optional[List[Media]] = None, response_model: Optional[BaseModel] = None, **kwargs) -> Any:
+	def run(self, prompt: str, media: Optional[List[Media]] = None, response_model: Optional[BaseModel] = None, **kwargs: Any) -> Any:
 		"""
 		Execute the image captioning process.
 

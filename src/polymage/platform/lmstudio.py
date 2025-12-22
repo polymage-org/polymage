@@ -37,13 +37,13 @@ qwen3_vl_30b = Model(
 )
 
 class LMStudioPlatform(Platform):
-	def __init__(self, host: str = "127.0.0.1:1234", **kwargs):
+	def __init__(self, host: str = "127.0.0.1:1234", **kwargs: Any) -> None:
 		super().__init__('lmstudio', list((gemma_3_27b, qwen3_vl_30b)), **kwargs)
 		self._host = host
 		self._api_key = "lm-studio"  # Dummy key (LM Studio doesn't require real keys)
 
 
-	def _text2text(self, model: Model, prompt: str, media: Optional[List[Media]] = None, response_model: Optional[BaseModel] = None, **kwargs) -> str:
+	def _text2text(self, model: Model, prompt: str, media: Optional[List[Media]] = None, response_model: Optional[BaseModel] = None, **kwargs: Any) -> str:
 		system_prompt: Optional[str] = kwargs.get("system_prompt", "")
 		client = OpenAI(
 				base_url=f"http://{self._host}/v1",  # LM Studio's default endpoint
@@ -65,7 +65,7 @@ class LMStudioPlatform(Platform):
 	# if the JSON is not valid, retry 3 times
 	#
 	@retry(retry=retry_if_exception_type(json.JSONDecodeError), stop=stop_after_attempt(3))
-	def _text2data(self, model: Model, prompt: str, response_model: BaseModel, media: Optional[List[Media]] = None, **kwargs) -> str:
+	def _text2data(self, model: Model, prompt: str, response_model: BaseModel, media: Optional[List[Media]] = None, **kwargs: Any) -> str:
 		system_prompt: Optional[str] = kwargs.get("system_prompt", "")
 		client = OpenAI(
 				base_url=f"http://{self._host}/v1",  # LM Studio's default endpoint
@@ -95,7 +95,7 @@ class LMStudioPlatform(Platform):
 		return json.loads(json_string)
 
 
-	def _image2text(self, model: Model, prompt: str, media: List[ImageMedia], **kwargs) -> str:
+	def _image2text(self, model: Model, prompt: str, media: List[ImageMedia], **kwargs: Any) -> str:
 		client = OpenAI(
 			base_url="http://localhost:1234/v1",  # LM Studio's default endpoint
 			api_key="lm-studio"  # Dummy key (LM Studio doesn't require real keys)
@@ -123,11 +123,11 @@ class LMStudioPlatform(Platform):
 
 
 
-	def _text2image(self, model: str, prompt: str, **kwargs) -> Image.Image:
+	def _text2image(self, model: str, prompt: str, **kwargs: Any) -> Image.Image:
 		"""Not supported"""
 		pass
 
-	def _image2image(self, model: str, prompt: str, image: Image.Image, **kwargs) -> Image.Image:
+	def _image2image(self, model: str, prompt: str, image: Image.Image, **kwargs: Any) -> Image.Image:
 		"""Not supported"""
 		pass
 

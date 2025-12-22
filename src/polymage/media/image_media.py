@@ -35,7 +35,7 @@ class ImageMedia(Media):
         image_media.save_to_file('output.png')
     """
 
-    def __init__(self, image_data: Union[str, bytes, Image.Image], metadata: Optional[Dict[str, Any]] = None, **kwargs):
+    def __init__(self, image_data: Union[str, bytes, Image.Image], metadata: Optional[Dict[str, Any]] = None, **kwargs: Any) -> None:
         self._metadata = metadata
         # Auto-detect based on type
         if isinstance(image_data, str):

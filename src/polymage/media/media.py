@@ -8,6 +8,3 @@ class Media(ABC):
     Abstract base class representing a multimedia object.
     Provides multiple constructors and conversion methods.
     """
-
-
-

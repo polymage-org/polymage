@@ -4,7 +4,7 @@ from typing import Dict, List, Any
 
 class Model(ABC):
 
-    def __init__(self, name: str, internal_name: str, capabilities: List[str], default_params:Dict[str, Any], **kwargs):
+    def __init__(self, name: str, internal_name: str, capabilities: List[str], default_params:Dict[str, Any], **kwargs: Any) -> None:
         self._name = name
         self._internal_name = internal_name
         self._capabilities = capabilities

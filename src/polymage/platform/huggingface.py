@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Optional, List
+from typing import Optional, List, Any
 from pydantic import BaseModel
 from PIL import Image
 from huggingface_hub import InferenceClient
@@ -43,12 +43,12 @@ stable_diffusion_3_medium = Model(
 
 
 class HuggingFacePlatform(Platform):
-    def __init__(self, api_key: str, **kwargs):
+    def __init__(self, api_key: str, **kwargs: Any) -> None:
         super().__init__('groq', list((SmolLM3_3b, flux_1_schnell, stable_diffusion_3_medium)), **kwargs)
         self._api_key = api_key
 
 
-    def _text2text(self, model: Model, prompt: str, media: Optional[List[Media]] = None, response_model: Optional[BaseModel] = None, **kwargs) -> str:
+    def _text2text(self, model: Model, prompt: str, media: Optional[List[Media]] = None, response_model: Optional[BaseModel] = None, **kwargs: Any) -> str:
         system_prompt: Optional[str] = kwargs.get("system_prompt", "You are a helpful assistant.")
         client = InferenceClient(api_key=self._api_key)
 
@@ -71,7 +71,7 @@ class HuggingFacePlatform(Platform):
     # if the JSON is not valid, retry 3 times
     #
     @retry(retry=retry_if_exception_type(json.JSONDecodeError), stop=stop_after_attempt(3), wait=wait_random_exponential(multiplier=3))
-    def _text2data(self, model: Model, prompt: str, response_model: BaseModel, media: Optional[List[Media]] = None, **kwargs) -> str:
+    def _text2data(self, model: Model, prompt: str, response_model: BaseModel, media: Optional[List[Media]] = None, **kwargs: Any) -> str:
         system_prompt: Optional[str] = kwargs.get("system_prompt", "You are a helpful assistant.")
         client = InferenceClient(api_key=self._api_key)
 
@@ -103,12 +103,12 @@ class HuggingFacePlatform(Platform):
         return json.loads(json_string)
 
 
-    def _image2text(self, model: Model, prompt: str, media: List[ImageMedia], **kwargs) -> str:
+    def _image2text(self, model: Model, prompt: str, media: List[ImageMedia], **kwargs: Any) -> str:
         """Not supported"""
         pass
 
 
-    def _text2image(self, model: Model, prompt: str, **kwargs) -> Image.Image:
+    def _text2image(self, model: Model, prompt: str, **kwargs: Any) -> Image.Image:
         client = InferenceClient(provider="hf-inference", api_key=self._api_key)
 
         # output is a PIL.Image object
@@ -124,7 +124,7 @@ class HuggingFacePlatform(Platform):
         return ImageMedia(image, {'Software': f"{self.platform_name()}/{model.model_name()}"})
 
 
-    def _image2image(self, model: Model, prompt: str, image: Image.Image, **kwargs) -> Image.Image:
+    def _image2image(self, model: Model, prompt: str, image: Image.Image, **kwargs: Any) -> Image.Image:
         """Not supported"""
         pass
 

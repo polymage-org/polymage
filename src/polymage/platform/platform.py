@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 class Platform(ABC):
-	def __init__(self, name: str, models: List[Model], **kwargs):
+	def __init__(self, name: str, models: List[Model], **kwargs: Any) -> None:
 		self._name = name
 		self._models = models
 
@@ -32,7 +32,7 @@ class Platform(ABC):
 
 
 	def text2text(self, model: str, prompt: str, media: Optional[List[Media]] = None,
-				  response_model: Optional[str] = None, **kwargs) -> Any:
+				  response_model: Optional[str] = None, **kwargs: Any) -> Any:
 		"""
         Convert text to text with optional structured output.
 
@@ -56,17 +56,17 @@ class Platform(ABC):
 
 	@abstractmethod
 	def _text2text(self, model: Model, prompt: str, media: Optional[List[Media]] = None,
-				   response_model: Optional[BaseModel] = None, **kwargs) -> Any:
+				   response_model: Optional[BaseModel] = None, **kwargs: Any) -> Any:
 		"""Platform-specific execution interface for text-to-text conversion"""
 		pass
 
 	@abstractmethod
-	def _text2data(self, model: Model, prompt: str, response_model: str, media: Optional[List[Media]] = None, **kwargs) -> Dict[str, Any]:
+	def _text2data(self, model: Model, prompt: str, response_model: str, media: Optional[List[Media]] = None, **kwargs: Any) -> Dict[str, Any]:
 		"""Platform-specific execution interface for text-to-structured data conversion"""
 		pass
 
 
-	def text2image(self, model: str, prompt: str, **kwargs) -> ImageMedia:
+	def text2image(self, model: str, prompt: str, **kwargs: Any) -> ImageMedia:
 		"""
         Convert text to image.
 
@@ -82,11 +82,11 @@ class Platform(ABC):
 		return self._text2image(platform_model, prompt, **kwargs)
 
 	@abstractmethod
-	def _text2image(self, model: Model, prompt: str, **kwargs) -> ImageMedia:
+	def _text2image(self, model: Model, prompt: str, **kwargs: Any) -> ImageMedia:
 		"""Platform-specific execution interface for text-to-image conversion"""
 		pass
 
-	def image2text(self, model: str, prompt: str, media: List[ImageMedia], **kwargs) -> str:
+	def image2text(self, model: str, prompt: str, media: List[ImageMedia], **kwargs: Any) -> str:
 		"""
         Convert image to text.
 
@@ -108,12 +108,12 @@ class Platform(ABC):
 		return self._image2text(platform_model, prompt, media=media, **kwargs)
 
 	@abstractmethod
-	def _image2text(self, model: Model, prompt: str, media: List[ImageMedia], **kwargs) -> str:
+	def _image2text(self, model: Model, prompt: str, media: List[ImageMedia], **kwargs: Any) -> str:
 		"""Platform-specific execution interface for image-to-text conversion"""
 		pass
 
 
-	def image2image(self, model: str, prompt: str, media: List[ImageMedia], **kwargs) -> ImageMedia:
+	def image2image(self, model: str, prompt: str, media: List[ImageMedia], **kwargs: Any) -> ImageMedia:
 		"""
         Convert image to image (image editing/transformations).
 
@@ -132,6 +132,6 @@ class Platform(ABC):
 			return self._image2image(platform_model, prompt, media=image, **kwargs)
 
 	@abstractmethod
-	def _image2image(self, model: Model, prompt: str, media: ImageMedia, **kwargs) -> ImageMedia:
+	def _image2image(self, model: Model, prompt: str, media: ImageMedia, **kwargs: Any) -> ImageMedia:
 		"""Platform-specific execution interface for image-to-image conversion"""
 		pass

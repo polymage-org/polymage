@@ -42,7 +42,7 @@ class Agent(ABC):
 
 
 	@abstractmethod
-	def run(self, prompt: str, media: Optional[List[Media]] = None, **kwargs) -> Any:
+	def run(self, prompt: str, media: Optional[List[Media]] = None, **kwargs: Any) -> Any:
 		"""
 		Execute the agent with a given prompt and optional media.
 

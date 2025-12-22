@@ -10,46 +10,12 @@ logger.addHandler(logging.NullHandler())
 
 class InstructAgent(Agent):
 	"""
-	An agent that handles text-to-text transformations with optional system prompts.
-
-	This class extends the base Agent class to provide functionality for running
-	text processing tasks where the platform's text2text method is used. It supports
-	optional system prompts that can be injected into the prompt processing workflow.
-
-	The agent is designed to work with various platforms that implement text2text
-	functionality, allowing for flexible prompt handling and response modeling.
-
-	Attributes:
-		Inherits all attributes from Agent class including platform, model,
-		response_model, and system_prompt.
-
-	Example:
-		# Create an InstructAgent instance
-		agent = InstructAgent(
-			platform=my_platform,
-			model="gpt-4",
-			system_prompt="You are a helpful assistant"
-		)
-
-		# Run with system prompt
-		result = agent.run("What is the capital of France?")
-
-		# Run without system prompt
-		result = agent.run("What is the capital of France?",
-						  response_model=MyResponseModel)
 	"""
 
-	def __init__(self, **kwargs):
-		"""
-		Initialize the InstructAgent with platform, model and optional parameters.
-
-		Args:
-			**kwargs: Keyword arguments passed to the parent Agent constructor
-					 including platform, model, response_model, and system_prompt.
-		"""
+	def __init__(self, **kwargs: Any) -> None:
 		super().__init__(**kwargs)
 
-	def run(self, prompt: str, media: Optional[List[Media]] = None, **kwargs) -> Any:
+	def run(self, prompt: str, media: Optional[List[Media]] = None, **kwargs: Any) -> Any:
 		"""
 		Execute a text-to-text transformation using the configured platform.
 

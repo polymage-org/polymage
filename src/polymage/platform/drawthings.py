@@ -79,12 +79,12 @@ zimage_turbo = Model(
 )
 
 class DrawThingsPlatform(Platform):
-    def __init__(self, host: str = "127.0.0.1:7860", **kwargs):
+    def __init__(self, host: str = "127.0.0.1:7860", **kwargs: Any) -> None:
         super().__init__('lmstudio',  list((hidream_fast, qwen_image_edit_8_steps, zimage_turbo)), **kwargs)
         self.host = host
 
 
-    def _text2image(self, model: Model, prompt: str, **kwargs) -> ImageMedia:
+    def _text2image(self, model: Model, prompt: str, **kwargs: Any) -> ImageMedia:
         payload = model.model_default_params()
         payload["prompt"] = prompt
 
@@ -99,7 +99,7 @@ class DrawThingsPlatform(Platform):
             raise
 
 
-    def _image2image(self, model: Model, prompt: str, media: ImageMedia, **kwargs) -> ImageMedia:
+    def _image2image(self, model: Model, prompt: str, media: ImageMedia, **kwargs: Any) -> ImageMedia:
         payload = model.model_default_params()
         payload["prompt"] = prompt
         # for image2image it's better to fit the to the nearest aspect ratio
@@ -123,18 +123,18 @@ class DrawThingsPlatform(Platform):
             raise
 
 
-    def _text2text(self, model: Model, prompt: str, **kwargs) -> Any:
+    def _text2text(self, model: Model, prompt: str, **kwargs: Any) -> Any:
         """Not supported"""
         pass
 
-    def _text2data(self, model: Model, response_model: BaseModel, prompt: str, **kwargs) -> Any:
+    def _text2data(self, model: Model, response_model: BaseModel, prompt: str, **kwargs: Any) -> Any:
         """Not supported"""
         pass
 
-    def _image2text(self, model: Model, prompt: str, image: Image.Image, **kwargs) -> str:
+    def _image2text(self, model: Model, prompt: str, image: Image.Image, **kwargs: Any) -> str:
         """Not supported"""
         pass
 
-    def _image2data(self, model: Model, response_model: BaseModel, prompt: str, image: Image.Image, **kwargs) -> Any:
+    def _image2data(self, model: Model, response_model: BaseModel, prompt: str, image: Image.Image, **kwargs: Any) -> Any:
         """Not supported"""
         pass

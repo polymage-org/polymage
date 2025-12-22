@@ -57,12 +57,12 @@ lucid_origin = Model(
 
 
 class CloudflarePlatform(Platform):
-	def __init__(self, api_id: str, api_key: str, **kwargs):
+	def __init__(self, api_id: str, api_key: str, **kwargs: Any) -> None:
 		super().__init__('lmstudio', list((flux_1_schnell, dreamshaper_8_lcm, lucid_origin)), **kwargs)
 		self._api_id = api_id
 		self._api_key = api_key
 
-	def _text2image(self, model: Model, prompt: str, **kwargs) -> ImageMedia:
+	def _text2image(self, model: Model, prompt: str, **kwargs: Any) -> ImageMedia:
 		CLOUDFLARE_ID = self._api_id
 		CLOUDFLARE_TOKEN = self._api_key
 
@@ -92,21 +92,21 @@ class CloudflarePlatform(Platform):
 			logging.error("API call failed", exc_info=True)
 			raise
 
-	def _image2image(self, model: str, prompt: str, image: Image.Image, **kwargs) -> ImageMedia:
+	def _image2image(self, model: str, prompt: str, image: Image.Image, **kwargs: Any) -> ImageMedia:
 		pass
 
-	def _text2text(self, model: str, prompt: str, **kwargs) -> Any:
+	def _text2text(self, model: str, prompt: str, **kwargs: Any) -> Any:
 		"""Not supported"""
 		pass
 
-	def _text2data(self, model: str, response_model: BaseModel, prompt: str, **kwargs) -> Any:
+	def _text2data(self, model: str, response_model: BaseModel, prompt: str, **kwargs: Any) -> Any:
 		"""Not supported"""
 		pass
 
-	def _image2text(self, model: str, prompt: str, image: Image.Image, **kwargs) -> str:
+	def _image2text(self, model: str, prompt: str, image: Image.Image, **kwargs: Any) -> str:
 		"""Not supported"""
 		pass
 
-	def _image2data(self, model: str, response_model: BaseModel, prompt: str, image: Image.Image, **kwargs) -> Any:
+	def _image2data(self, model: str, response_model: BaseModel, prompt: str, image: Image.Image, **kwargs: Any) -> Any:
 		"""Not supported"""
 		pass
