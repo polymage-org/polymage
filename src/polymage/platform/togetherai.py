@@ -25,6 +25,32 @@ gpt_oss_20b = Model(
 )
 
 class TogetherAiPlatform(Platform):
+	"""
+	    Integration platform for Together AI services using the OpenAI-compatible API.
+
+	    This class provides a concrete implementation of the `Platform` interface,
+	    allowing interaction with Together AI models for text generation, structured
+	    data extraction, and vision-to-text tasks. It leverages the `openai` Python
+	    library to communicate with Together AI's inference endpoints.
+
+	    Attributes:
+	        api_key (str): The API key used for authenticating requests to Together AI.
+	        models (List[Model]): A list containing the supported models for this platform,
+	            defaulting to `gpt-oss-20b`.
+
+	    Methods:
+	        _text2text: Sends a text prompt to a model and returns a string response.
+	        _text2data: Sends a text prompt and returns structured data validated
+	            against a Pydantic model with automatic retry logic on JSON failure.
+	        _image2text: Analyzes an image alongside a text prompt (Vision).
+	        _text2image: (Not supported) Placeholder for future implementation.
+	        _image2image: (Not supported) Placeholder for future implementation.
+
+	    Note:
+	        The `_text2data` method currently references `self._host` and an LM Studio
+	        style URL in its implementation, which may require adjustment to align
+	        with Together AI's standard production endpoints.
+	"""
 	def __init__(self, api_key: str, **kwargs: Any) -> None:
 		super().__init__('togetherai', list((gpt_oss_20b,)), **kwargs)
 		self._api_key = api_key
