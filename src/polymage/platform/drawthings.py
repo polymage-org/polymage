@@ -15,12 +15,95 @@ logger.addHandler(logging.NullHandler())
 #
 # installed models default params
 #
+flux_1_schnell = Model(
+	name="flux-1-schnell",
+	internal_name="flux_1_schnell_q8p.ckpt",
+	capabilities=["text2image"],
+	default_params={
+        "model": "flux_1_schnell_q8p.ckpt",
+        "negative_prompt": "",
+        "steps": 8,
+        "batch_count": 1,
+        "sampler": "DPM++ 2M Trailing",
+        "seed": -1,
+        "hires_fix": False,
+        "tiled_decoding": False,
+        "clip_skip": 1,
+        "shift": 1.0,
+        "guidance_scale": 2.0,
+        "resolution_dependent_shift": False,
+        "loras": [],
+    },
+)
+
+flux_1_dev = Model(
+	name="flux-1-dev",
+	internal_name="flux_1_dev_q8p.ckpt",
+	capabilities=["text2image"],
+	default_params={
+        "model": "flux_1_schnell_q8p.ckpt",
+        "negative_prompt": "",
+        "steps": 20,
+        "batch_count": 1,
+        "sampler": "DPM++ 2M Trailing",
+        "seed": -1,
+        "hires_fix": False,
+        "tiled_decoding": False,
+        "clip_skip": 1,
+        "shift": 1.0,
+        "guidance_scale": 2.0,
+        "resolution_dependent_shift": True,
+        "loras": [],
+    },
+)
+
+flux_2_dev = Model(
+	name="flux-2-dev",
+	internal_name="flux_2_dev_q8p.ckpt",
+	capabilities=["text2image"],
+	default_params={
+        "model": "flux_2_dev_q8p.ckpt",
+        "negative_prompt": "",
+        "steps": 20,
+        "batch_count": 1,
+        "sampler": "DPM++ 2M Trailing",
+        "seed": -1,
+        "hires_fix": False,
+        "tiled_decoding": False,
+        "clip_skip": 1,
+        "shift": 1.0,
+        "guidance_scale": 2.0,
+        "resolution_dependent_shift": False,
+        "loras": [],	},
+)
+
 hidream_fast = Model(
     name = "hidream-fast",
     internal_name = "hidream_i1_fast_q8p.ckpt",
     capabilities = ["text2image"],
     default_params = {
         "model": "hidream_i1_fast_q8p.ckpt",
+        "negative_prompt": "",
+        "steps": 14,
+        "batch_count": 1,
+        "sampler": "DPM++ 2M Trailing",
+        "seed": -1,
+        "hires_fix": False,
+        "tiled_decoding": False,
+        "clip_skip": 1,
+        "shift": 1.0,
+        "guidance_scale": 1.0,
+        "resolution_dependent_shift": False,
+        "loras": [],
+    },
+)
+
+hidream_dev = Model(
+    name = "hidream-dev",
+    internal_name = "hidream_i1_dev_q8p.ckpt",
+    capabilities = ["text2image"],
+    default_params = {
+        "model": "hidream_i1_dev_q8p.ckpt",
         "negative_prompt": "",
         "steps": 14,
         "batch_count": 1,
@@ -43,7 +126,7 @@ qwen_image_edit_8_steps = Model(
     default_params = {
         "model": "qwen_image_edit_2509_q8p.ckpt",
         "negative_prompt": "",
-        "steps": 9,
+        "steps": 10,
         "batch_count": 1,
         "sampler": "DPM++ 2M Trailing",
         "seed": -1,
@@ -80,7 +163,7 @@ zimage_turbo = Model(
 
 class DrawThingsPlatform(Platform):
     def __init__(self, host: str = "127.0.0.1:7860", **kwargs: Any) -> None:
-        super().__init__('lmstudio',  list((hidream_fast, qwen_image_edit_8_steps, zimage_turbo)), **kwargs)
+        super().__init__('lmstudio',  list((flux_1_schnell, flux_1_dev, flux_2_dev, hidream_fast, qwen_image_edit_8_steps, zimage_turbo)), **kwargs)
         self.host = host
 
 
