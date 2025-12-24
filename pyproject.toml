@@ -7,6 +7,7 @@ name = "polymage"
 version = "0.0.2"
 authors = [
   { name="Fabrice Gaillard", email="fgaillard@w3architect.com" },
+  { name="Philippe Gaillard", email="philippe@gaillard.xyz" },
 ]
 description = "polymage : a multimodal agent python library"
 readme = "README.md"
@@ -32,4 +33,12 @@ dev = [
     "mkdocstrings-python>=2.0.1",
     "pytest>=9.0.2",
     "setuptools>=80.9.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = "src"
+testpaths = ["tests"]
+markers = [
+    "unit: mark tests as unit tests",
+    "integration: mark tests as integration tests",
 ]

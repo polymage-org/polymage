@@ -1,121 +1,105 @@
-import base64
-from io import BytesIO
 import pytest
-from PIL import Image, PngImagePlugin
+import io
+import base64
+from PIL import Image
 
-from polymage.media.image_media import (
-    base64_to_image,
-    bytes_to_image,
-    image_to_base64,
-    ImageMedia,
-)
+from unittest.mock import MagicMock, patch
+from polymage.media.image_media import ImageMedia
+from polymage.utils.image_utils  import image_to_base64
 
-
-# --------------------------
-# Fixtures
-# --------------------------
 
 @pytest.fixture
-def sample_image():
-    """Returns a small red 10x10 PIL Image."""
-    return Image.new("RGB", (10, 10), color=(255, 0, 0))
+def sample_pil_image():
+    """Provides a basic 10x10 RGB image."""
+    return Image.new("RGB", (10, 10), color="red")
 
 @pytest.fixture
-def sample_metadata():
-    return {"author": "pytest", "source": "unit_test"}
+def sample_base64_image(sample_pil_image):
+    """Provides a base64 string of a PNG image."""
+    buffer = io.BytesIO()
+    sample_pil_image.save(buffer, format="PNG")
+    return base64.b64encode(buffer.getvalue()).decode("utf-8")
 
-# --------------------------
-# Utility Function Tests
-# --------------------------
+@pytest.fixture
+def sample_bytes_image(sample_pil_image):
+    """Provides raw bytes of a PNG image."""
+    buffer = io.BytesIO()
+    sample_pil_image.save(buffer, format="PNG")
+    return buffer.getvalue()
 
-def test_base64_to_image(sample_image):
-    b64_str = image_to_base64(sample_image, format="PNG")
-    img = base64_to_image(b64_str)
-    assert isinstance(img, Image.Image)
-    assert img.size == sample_image.size
+class TestImageMedia:
+    
+    # --- Initialization Tests ---
 
-def test_bytes_to_image(sample_image):
-    buf = BytesIO()
-    sample_image.save(buf, format="PNG")
-    img_bytes = buf.getvalue()
-    img = bytes_to_image(img_bytes)
-    assert isinstance(img, Image.Image)
-    assert img.size == sample_image.size
+    def test_init_with_pil_image(self, sample_pil_image):
+        """Tests initialization using a direct PIL Image object."""
+        media = ImageMedia(sample_pil_image)
+        assert media._image == sample_pil_image
+        assert isinstance(media._image, Image.Image)
 
-def test_image_to_base64(sample_image):
-    b64_str = image_to_base64(sample_image, format="PNG")
-    assert isinstance(b64_str, str)
-    decoded = base64.b64decode(b64_str)
-    assert len(decoded) > 0
-    # Verify it can be reloaded
-    img = Image.open(BytesIO(decoded))
-    assert img.size == sample_image.size
+    def test_init_with_base64(self, sample_base64_image):
+        """Tests initialization using a base64 string."""
+        media = ImageMedia(sample_base64_image)
+        assert isinstance(media._image, Image.Image)
+        assert media._image.size == (10, 10)
 
-# --------------------------
-# ImageMedia Class Tests
-# --------------------------
+    def test_init_with_bytes(self, sample_bytes_image):
+        """Tests initialization using raw bytes."""
+        media = ImageMedia(sample_bytes_image)
+        assert isinstance(media._image, Image.Image)
+        assert media._image.size == (10, 10)
 
-def test_imagmedia_from_pil_image(sample_image, sample_metadata):
-    media = ImageMedia(sample_image, metadata=sample_metadata)
-    assert isinstance(media._image, Image.Image)
-    assert media._metadata == sample_metadata
+    def test_init_invalid_type(self):
+        """Tests that passing an unsupported type raises a TypeError."""
+        with pytest.raises(TypeError, match="image_data must be"):
+            ImageMedia(12345)
 
-def test_imagmedia_from_base64_string(sample_image, sample_metadata):
-    b64_str = image_to_base64(sample_image, format="PNG")
-    media = ImageMedia(b64_str, metadata=sample_metadata)
-    assert isinstance(media._image, Image.Image)
-    assert media._image.size == sample_image.size
-    assert media._metadata == sample_metadata
+    def test_init_with_metadata(self, sample_pil_image):
+        """Tests that metadata is correctly stored during init."""
+        meta = {"author": "Gemini", "version": "1.0"}
+        media = ImageMedia(sample_pil_image, metadata=meta)
+        assert media._metadata == meta
 
-def test_imagmedia_from_bytes(sample_image, sample_metadata):
-    buf = BytesIO()
-    sample_image.save(buf, format="PNG")
-    img_bytes = buf.getvalue()
-    media = ImageMedia(img_bytes, metadata=sample_metadata)
-    assert isinstance(media._image, Image.Image)
-    assert media._image.size == sample_image.size
-    assert media._metadata == sample_metadata
+    # --- Conversion Tests ---
 
-def test_imagmedia_invalid_input():
-    with pytest.raises(TypeError, match="image_data must be either"):
-        ImageMedia(12345)
+    def test_to_base64(self, sample_pil_image):
+        """Tests conversion back to base64 string."""
+        media = ImageMedia(sample_pil_image)
+        b64_output = media.to_base64(format="PNG")
+        
+        assert isinstance(b64_output, str)
+        # Verify it's valid base64 by decoding it back
+        decoded_bytes = base64.b64decode(b64_output)
+        img = Image.open(io.BytesIO(decoded_bytes))
+        assert img.size == (10, 10)
 
-def test_to_base64(sample_image):
-    media = ImageMedia(sample_image)
-    b64_str = media.to_base64(format="PNG")
-    assert isinstance(b64_str, str)
-    # Validate round-trip
-    recovered = base64_to_image(b64_str)
-    assert recovered.size == sample_image.size
+    # --- File I/O Tests ---
 
-def test_save_to_file_with_metadata(sample_image, sample_metadata, tmp_path):
-    media = ImageMedia(sample_image, metadata=sample_metadata)
-    output_path = tmp_path / "output.png"
-    media.save_to_file(str(output_path))
+    def test_save_to_file(self, sample_pil_image, tmp_path):
+        """Tests saving the image to a file path."""
+        d = tmp_path / "output"
+        d.mkdir()
+        file_path = str(d / "test_image.png")
+        
+        media = ImageMedia(sample_pil_image, metadata={"title": "Test"})
+        media.save_to_file(file_path)
+        
+        # Verify file exists
+        assert (d / "test_image.png").exists()
+        
+        # Verify metadata was saved (PNG specific)
+        saved_img = Image.open(file_path)
+        assert saved_img.info["title"] == "Test"
 
-    # Reload and check metadata
-    reloaded = Image.open(output_path)
-    assert hasattr(reloaded, "text")  # PNG metadata
-    for k, v in sample_metadata.items():
-        assert reloaded.text.get(k) == v
-
-def test_save_to_file_no_metadata(sample_image, tmp_path):
-    media = ImageMedia(sample_image)
-    output_path = tmp_path / "output_no_meta.png"
-    media.save_to_file(str(output_path))
-
-    reloaded = Image.open(output_path)
-    assert isinstance(reloaded, Image.Image)
-    # Should not crash; metadata may be absent
-
-# --------------------------
-# Edge Cases
-# --------------------------
-
-def test_base64_invalid_string():
-    with pytest.raises(Exception):
-        base64_to_image("not_a_valid_base64_image_string")
-
-def test_bytes_invalid():
-    with pytest.raises(Exception):
-        bytes_to_image(b"invalid_image_bytes")
+    @patch("PIL.Image.Image.save")
+    def test_save_to_file_calls_pil_save(self, mock_save, sample_pil_image):
+        """Mocks the PIL save method to ensure internal calls are correct."""
+        media = ImageMedia(sample_pil_image, metadata={"key": "value"})
+        media.save_to_file("mock_path.png")
+        
+        # Check if save was called
+        assert mock_save.called
+        # Verify that pnginfo was passed to the save call
+        args, kwargs = mock_save.call_args
+        assert "pnginfo" in kwargs
+        

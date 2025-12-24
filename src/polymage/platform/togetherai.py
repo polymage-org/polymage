@@ -24,6 +24,14 @@ gpt_oss_20b = Model(
     }
 )
 
+qwen3_vl_8b = Model(
+    name= "Qwen3-VL-8B-Instruct",
+    internal_name= "Qwen/Qwen3-VL-8B-Instruct",
+    capabilities = ["text2text", "image2text"],
+    default_params = {
+    }
+)
+
 class TogetherAiPlatform(Platform):
 	"""
 	    Integration platform for Together AI services using the OpenAI-compatible API.
@@ -52,7 +60,7 @@ class TogetherAiPlatform(Platform):
 	        with Together AI's standard production endpoints.
 	"""
 	def __init__(self, api_key: str, **kwargs: Any) -> None:
-		super().__init__('togetherai', list((gpt_oss_20b,)), **kwargs)
+		super().__init__('togetherai', list((gpt_oss_20b, qwen3_vl_8b)), **kwargs)
 		self._api_key = api_key
 
 
@@ -81,7 +89,7 @@ class TogetherAiPlatform(Platform):
 	def _text2data(self, model: Model, prompt: str, response_model: BaseModel, media: Optional[List[Media]] = None, **kwargs: Any) -> str:
 		system_prompt: Optional[str] = kwargs.get("system_prompt", "")
 		client = OpenAI(
-				base_url=f"http://{self._host}/v1",  # LM Studio's default endpoint
+				base_url=f"https://api.together.xyz/v1",  # TogetherAi's default endpoint
 				api_key=self._api_key
 		)
 
@@ -108,7 +116,7 @@ class TogetherAiPlatform(Platform):
 		return json.loads(json_string)
 
 
-	def _image2text(self, model: Model, prompt: str, media: List[ImageMedia], api_key=None, **kwargs: Any) -> str:
+	def _image2text(self, model: Model, prompt: str, media: List[ImageMedia], **kwargs: Any) -> str:
 		client = OpenAI(
 			base_url="https://api.together.xyz/v1",
 			api_key=self._api_key,
@@ -119,26 +127,29 @@ class TogetherAiPlatform(Platform):
 			image = media[0]
 			base64_image = image.to_base64()
 
-		response = client.responses.create(
-			model=model.model_internal_name(),
-			input=[
-				{
-					"role": "user",
-					"content": [
-						{"type": "input_text", "text": prompt},
-						{"type": "input_image", "image_url": f"data:image/png;base64,{base64_image}"},
-					],
-				}
-			],
-		)
-		return response.output[0].content[0].text
-
-
+		response = client.chat.completions.create(
+		    model="meta-llama/Llama-4-Scout-17B-16E-Instruct",
+			messages=[
+        		{
+            		"role": "user",
+            		"content": [
+                		{"type": "text", "text": prompt},
+                		{
+                    		"type": "image_url",
+                    		"image_url": {"url": f"data:image/jpeg;base64,{base64_image}"},
+                		},
+            		],
+        		}
+    		],
+    		stream=False,
+    	)
+		return response.choices[0].message.content.strip()
 
 
 	def _text2image(self, model: str, prompt: str, **kwargs: Any) -> Image.Image:
 		"""Not supported"""
 		pass
+		
 
 	def _image2image(self, model: str, prompt: str, image: Image.Image, **kwargs: Any) -> Image.Image:
 		"""Not supported"""
