@@ -169,7 +169,7 @@ zimage_turbo = Model(
     default_params = {
         "model": "z_image_turbo_1.0_q8p.ckpt",
         "negative_prompt": "",
-        "steps": 10,
+        "steps": 8,
         "batch_count": 1,
         "sampler": "UniPC Trailing",
         "seed": -1,

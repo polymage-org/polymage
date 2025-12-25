@@ -16,12 +16,27 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
+gemma_3_12b = Model(
+    name= "gemma-3-12b",
+    internal_name= "gemma-3-12b-it",
+    capabilities = ["text2text", "text2image"],
+    default_params = {
+    }
+)
+
 gemma_3_27b = Model(
     name= "gemma-3-27b",
     internal_name= "gemma-3-27b-it-qat",
     capabilities = ["text2text", "text2image"],
     default_params = {
-        "steps": 8,
+    }
+)
+
+qwen3_vl_8b = Model(
+    name= "qwen3-vl-8b",
+    internal_name= "qwen3-vl-8b-instruct-mlx",
+    capabilities = ["text2text", "text2image"],
+    default_params = {
     }
 )
 
@@ -30,15 +45,12 @@ qwen3_vl_30b = Model(
     internal_name= "qwen/qwen3-vl-30b",
     capabilities = ["text2text", "text2image"],
     default_params = {
-        "num_steps": 20,
-        "height": 1024,
-        "width": 1024,
     }
 )
 
 class LMStudioPlatform(Platform):
 	def __init__(self, host: str = "127.0.0.1:1234", **kwargs: Any) -> None:
-		super().__init__('lmstudio', list((gemma_3_27b, qwen3_vl_30b)), **kwargs)
+		super().__init__('lmstudio', list((gemma_3_12b, gemma_3_27b, qwen3_vl_8b, qwen3_vl_30b)), **kwargs)
 		self._host = host
 		self._api_key = "lm-studio"  # Dummy key (LM Studio doesn't require real keys)
 
