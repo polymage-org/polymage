@@ -15,6 +15,8 @@ from ..platform.platform import Platform
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
+TOGETHEAI_BASE_URL = "https://api.together.xyz/v1/"
+
 
 gpt_oss_20b = Model(
     name= "gpt-oss-20b",
@@ -67,7 +69,7 @@ class TogetherAiPlatform(Platform):
 	def _text2text(self, model: Model, prompt: str, media: Optional[List[Media]] = None, response_model: Optional[BaseModel] = None, **kwargs: Any) -> str:
 		system_prompt: Optional[str] = kwargs.get("system_prompt", "")
 		client = OpenAI(
-				base_url=f"https://api.together.xyz/v1",  # TogetherAi's default endpoint
+				base_url=TOGETHEAI_BASE_URL,  # TogetherAi's default endpoint
 				api_key=self._api_key
 			)
 		response = client.chat.completions.create(
@@ -89,7 +91,7 @@ class TogetherAiPlatform(Platform):
 	def _text2data(self, model: Model, prompt: str, response_model: BaseModel, media: Optional[List[Media]] = None, **kwargs: Any) -> str:
 		system_prompt: Optional[str] = kwargs.get("system_prompt", "")
 		client = OpenAI(
-				base_url=f"https://api.together.xyz/v1",  # TogetherAi's default endpoint
+				base_url=TOGETHEAI_BASE_URL,  # TogetherAi's default endpoint
 				api_key=self._api_key
 		)
 
@@ -118,7 +120,7 @@ class TogetherAiPlatform(Platform):
 
 	def _image2text(self, model: Model, prompt: str, media: List[ImageMedia], **kwargs: Any) -> str:
 		client = OpenAI(
-			base_url="https://api.together.xyz/v1",
+			base_url=TOGETHEAI_BASE_URL,
 			api_key=self._api_key,
 		)
 		if len(media) == 0:

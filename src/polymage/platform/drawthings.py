@@ -119,6 +119,28 @@ hidream_dev = Model(
     },
 )
 
+qwen_image_edit_4_steps = Model(
+    name = "qwen-image-edit-4-steps",
+    internal_name = "qwen_image_edit_2509_q8p.ckpt",
+    capabilities = ["text2image", "image2image"],
+    default_params = {
+        "model": "qwen_image_edit_2509_q8p.ckpt",
+        "negative_prompt": "",
+        "steps": 4,
+        "batch_count": 1,
+        "sampler": "DPM++ 2M Trailing",
+        "seed": -1,
+        "hires_fix": False,
+        "tiled_decoding": False,
+        "clip_skip": 1,
+        "shift": 1.0,
+        "guidance_scale": 2.0,
+        "resolution_dependent_shift": True,
+        "loras": [{"file": "qwen_image_edit_2509_lightning_4_step_v1.0_lora_f16.ckpt", "weight": 1, "mode": "all"}],
+    },
+)
+
+
 qwen_image_edit_8_steps = Model(
     name = "qwen-image-edit-8-steps",
     internal_name = "qwen_image_edit_2509_q8p.ckpt",
@@ -134,7 +156,7 @@ qwen_image_edit_8_steps = Model(
         "tiled_decoding": False,
         "clip_skip": 1,
         "shift": 1.0,
-        "guidance_scale": 1.0,
+        "guidance_scale": 2.0,
         "resolution_dependent_shift": True,
         "loras": [{"file": "qwen_image_edit_2509_lightning_8_step_v1.0_lora_f16.ckpt", "weight": 1, "mode": "all"}],
     },
@@ -163,7 +185,7 @@ zimage_turbo = Model(
 
 class DrawThingsPlatform(Platform):
     def __init__(self, host: str = "127.0.0.1:7860", **kwargs: Any) -> None:
-        super().__init__('lmstudio',  list((flux_1_schnell, flux_1_dev, flux_2_dev, hidream_fast, qwen_image_edit_8_steps, zimage_turbo)), **kwargs)
+        super().__init__('drawthings',  list((flux_1_schnell, flux_1_dev, flux_2_dev, hidream_fast, qwen_image_edit_4_steps, qwen_image_edit_8_steps, zimage_turbo)), **kwargs)
         self.host = host
 
 
