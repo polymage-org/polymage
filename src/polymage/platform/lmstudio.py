@@ -6,51 +6,19 @@ from pydantic import BaseModel
 from PIL import Image
 from tenacity import retry, stop_after_attempt, retry_if_exception_type
 
-from ..model.model import Model
-from ..media.media import Media
-from ..media.image_media import ImageMedia
-from ..platform.platform import Platform
+from polymage.model.model import Model
+from polymage.media.media import Media
+from polymage.media.image_media import ImageMedia
+from polymage.platform.platform import Platform
 
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
-gemma_3_12b = Model(
-    name= "gemma-3-12b",
-    internal_name= "gemma-3-12b-it",
-    capabilities = ["text2text", "text2image"],
-    default_params = {
-    }
-)
-
-gemma_3_27b = Model(
-    name= "gemma-3-27b",
-    internal_name= "gemma-3-27b-it-qat",
-    capabilities = ["text2text", "text2image"],
-    default_params = {
-    }
-)
-
-qwen3_vl_8b = Model(
-    name= "qwen3-vl-8b",
-    internal_name= "qwen3-vl-8b-instruct-mlx",
-    capabilities = ["text2text", "text2image"],
-    default_params = {
-    }
-)
-
-qwen3_vl_30b = Model(
-    name= "qwen3-vl-30b",
-    internal_name= "qwen/qwen3-vl-30b",
-    capabilities = ["text2text", "text2image"],
-    default_params = {
-    }
-)
-
 class LMStudioPlatform(Platform):
 	def __init__(self, host: str = "127.0.0.1:1234", **kwargs: Any) -> None:
-		super().__init__('lmstudio', list((gemma_3_12b, gemma_3_27b, qwen3_vl_8b, qwen3_vl_30b)), **kwargs)
+		super().__init__('lmstudio', **kwargs)
 		self._host = host
 		self._api_key = "lm-studio"  # Dummy key (LM Studio doesn't require real keys)
 
@@ -62,7 +30,7 @@ class LMStudioPlatform(Platform):
 				api_key=self._api_key
 			)
 		response = client.chat.completions.create(
-			model=model.model_internal_name(),
+			model=model.internal_name(),
 			messages=[
 				{"role": "system", "content": system_prompt},
 				{"role": "user", "content": prompt}
@@ -88,7 +56,7 @@ class LMStudioPlatform(Platform):
 		json_schema_name = json_schema['title']
 
 		chat_completion = client.chat.completions.create(
-			model=model.model_internal_name(),
+			model=model.internal_name(),
 			messages=[
 				{"role": "system", "content": system_prompt},
 				{"role": "user", "content": prompt}
@@ -119,7 +87,7 @@ class LMStudioPlatform(Platform):
 			base64_image = image.to_base64()
 
 		response = client.responses.create(
-			model=model.model_internal_name(),
+			model=model.internal_name(),
 			input=[
 				{
 					"role": "user",

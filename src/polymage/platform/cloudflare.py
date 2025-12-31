@@ -19,46 +19,10 @@ Clouflare support LLm and some other multimedia models
 you can find the list of supported models here : https://developers.cloudflare.com/workers-ai/models/
 """
 
-flux_1_schnell = Model(
-	name="flux-1-schnell",
-	internal_name="@cf/black-forest-labs/flux-1-schnell",
-	capabilities=["text2image"],
-	default_params={
-		"steps": 8,
-	},
-	output_type="bytes",
-)
-
-dreamshaper_8_lcm = Model(
-	name="dreamshaper-8-lcm",
-	internal_name="@cf/lykon/dreamshaper-8-lcm",
-	capabilities=["text2image"],
-	default_params={
-		"num_steps": 20,
-		"height": 1024,
-		"width": 1024,
-		"guidance": 2.0,
-	},
-	output_type="bytes",
-)
-
-lucid_origin = Model(
-	name="lucid-origin",
-	internal_name="@cf/leonardo/lucid-origin",
-	capabilities=["text2image"],
-	default_params={
-		"num_steps": 40,
-		"height": 1120,
-		"width": 1120,
-		"guidance": 2.0,
-	},
-	output_type="base64",
-)
-
 
 class CloudflarePlatform(Platform):
 	def __init__(self, api_id: str, api_key: str, **kwargs: Any) -> None:
-		super().__init__('lmstudio', list((flux_1_schnell, dreamshaper_8_lcm, lucid_origin)), **kwargs)
+		super().__init__('cloudflare', **kwargs)
 		self._api_id = api_id
 		self._api_key = api_key
 
@@ -66,11 +30,14 @@ class CloudflarePlatform(Platform):
 		CLOUDFLARE_ID = self._api_id
 		CLOUDFLARE_TOKEN = self._api_key
 
-		payload = model.model_default_params()
+		payload = model.default_params()
+		# get output_type from the platform_params
+		platform_params = model.platform_params()
+		output_type = platform_params['output_type']
 		# add the prompt to the params
 		payload["prompt"] = prompt
 
-		url = "https://api.cloudflare.com/client/v4/accounts/" + CLOUDFLARE_ID + "/ai/run/" + model.model_internal_name()
+		url = "https://api.cloudflare.com/client/v4/accounts/" + CLOUDFLARE_ID + "/ai/run/" + model.internal_name()
 		headers = {
 			'Content-Type': 'application/json',
 			'Authorization': 'Bearer ' + CLOUDFLARE_TOKEN
@@ -79,20 +46,21 @@ class CloudflarePlatform(Platform):
 		try:
 			response = requests.post(url, headers=headers, json=data)
 			response.raise_for_status()  # Raise an exception for HTTP errors
-			if model.model_output_type() == "bytes":
+			if output_type == "bytes":
 				# image is returned as binary
 				image_data = response.content
-				return ImageMedia(image_data,{'Software': f"{self.platform_name()}/{model.model_name()}", 'Description': prompt})
+				return ImageMedia(image_data,{'Software': f"{self.platform_name()}/{model.name()}", 'Description': prompt})
 			else:
 				# image is returned as base64
 				result = response.json()
 				image_data = result['result']['image']
-				return ImageMedia(image_data,{'Software': f"{self.platform_name()}/{model.model_name()}", 'Description': prompt})
-		except Exception as e:
+				return ImageMedia(image_data,{'Software': f"{self.platform_name()}/{model.name()}", 'Description': prompt})
+		except Exception:
 			logging.error("API call failed", exc_info=True)
 			raise
 
 	def _image2image(self, model: str, prompt: str, image: Image.Image, **kwargs: Any) -> ImageMedia:
+		"""Not supported"""
 		pass
 
 	def _text2text(self, model: str, prompt: str, **kwargs: Any) -> Any:

@@ -18,22 +18,6 @@ logger.addHandler(logging.NullHandler())
 TOGETHEAI_BASE_URL = "https://api.together.xyz/v1/"
 
 
-gpt_oss_20b = Model(
-    name= "gpt-oss-20b",
-    internal_name= "openai/gpt-oss-20b",
-    capabilities = ["text2text"],
-    default_params = {
-    }
-)
-
-qwen3_vl_8b = Model(
-    name= "Qwen3-VL-8B-Instruct",
-    internal_name= "Qwen/Qwen3-VL-8B-Instruct",
-    capabilities = ["text2text", "image2text"],
-    default_params = {
-    }
-)
-
 class TogetherAiPlatform(Platform):
 	"""
 	    Integration platform for Together AI services using the OpenAI-compatible API.
@@ -62,7 +46,7 @@ class TogetherAiPlatform(Platform):
 	        with Together AI's standard production endpoints.
 	"""
 	def __init__(self, api_key: str, **kwargs: Any) -> None:
-		super().__init__('togetherai', list((gpt_oss_20b, qwen3_vl_8b)), **kwargs)
+		super().__init__('togetherai', **kwargs)
 		self._api_key = api_key
 
 
@@ -73,7 +57,7 @@ class TogetherAiPlatform(Platform):
 				api_key=self._api_key
 			)
 		response = client.chat.completions.create(
-			model=model.model_internal_name(),
+			model=model.internal_name(),
 			messages=[
 				{"role": "system", "content": system_prompt},
 				{"role": "user", "content": prompt}
@@ -99,7 +83,7 @@ class TogetherAiPlatform(Platform):
 		json_schema_name = json_schema['title']
 
 		chat_completion = client.chat.completions.create(
-			model=model.model_internal_name(),
+			model=model.internal_name(),
 			messages=[
 				{"role": "system", "content": system_prompt},
 				{"role": "user", "content": prompt}

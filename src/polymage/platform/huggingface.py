@@ -6,10 +6,10 @@ from PIL import Image
 from huggingface_hub import InferenceClient
 from tenacity import retry, stop_after_attempt, retry_if_exception_type, wait_random_exponential
 
-from ..model.model import Model
-from ..media.media import Media
-from ..media.image_media import ImageMedia
-from .platform import Platform
+from polymage.model.model import Model
+from polymage.media.media import Media
+from polymage.media.image_media import ImageMedia
+from polymage.platform.platform import Platform
 
 """
 Huggingface platform
@@ -17,13 +17,6 @@ Huggingface platform
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-SmolLM3_3b = Model(
-    name= "SmolLM3-3b",
-    internal_name= "HuggingFaceTB/SmolLM3-3B:hf-inference",
-    capabilities = ["text2text","text2data"],
-    default_params = {
-    }
-)
 
 flux_1_schnell = Model(
 	name="flux-1-schnell",
@@ -44,7 +37,7 @@ stable_diffusion_3_medium = Model(
 
 class HuggingFacePlatform(Platform):
     def __init__(self, api_key: str, **kwargs: Any) -> None:
-        super().__init__('groq', list((SmolLM3_3b, flux_1_schnell, stable_diffusion_3_medium)), **kwargs)
+        super().__init__('huggingface', **kwargs)
         self._api_key = api_key
 
 
@@ -54,7 +47,7 @@ class HuggingFacePlatform(Platform):
 
         try:
             chat_completion = client.chat.completions.create(
-                model=model.model_internal_name(),
+                model=model.internal_name(),
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": prompt},
@@ -80,7 +73,7 @@ class HuggingFacePlatform(Platform):
 
         try:
             chat_completion = client.chat.completions.create(
-                model=model.model_internal_name(),
+                model=model.internal_name(),
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": prompt}
@@ -115,13 +108,13 @@ class HuggingFacePlatform(Platform):
         try:
             image = client.text_to_image(
                 prompt,
-                model=model.model_internal_name(),
+                model=model.internal_name(),
             )
         except:
             logging.error("API call failed", exc_info=True)
             raise
 
-        return ImageMedia(image, {'Software': f"{self.platform_name()}/{model.model_name()}"})
+        return ImageMedia(image, {'Software': f"{self.platform_name()}/{model.name()}"})
 
 
     def _image2image(self, model: Model, prompt: str, image: Image.Image, **kwargs: Any) -> Image.Image:

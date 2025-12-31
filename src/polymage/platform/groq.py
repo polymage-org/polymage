@@ -20,41 +20,10 @@ you can find the list of supported models here : https://console.groq.com/docs/m
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-gpt_oss_20b = Model(
-    name= "gpt-oss-20b",
-    internal_name= "openai/gpt-oss-20b",
-    capabilities = ["text2text"],
-    default_params = {
-    }
-)
-
-gpt_oss_120b = Model(
-    name= "gpt-oss-120b",
-    internal_name= "openai/gpt-oss-120b",
-    capabilities = ["text2text"],
-    default_params = {
-    }
-)
-
-Qwen3_32b = Model(
-    name= "Qwen3-32b",
-    internal_name= "qwen/qwen3-32b",
-    capabilities = ["text2text"],
-    default_params = {
-    }
-)
-
-llama_4_scout_17b_16e_instruct = Model(
-    name= "llama-4-scout-17b-16e-instruct",
-    internal_name= "meta-llama/llama-4-scout-17b-16e-instruct",
-    capabilities = ["text2text", "image2text"],
-    default_params = {
-    }
-)
 
 class GroqPlatform(Platform):
     def __init__(self, api_key: str, **kwargs: Any) -> None:
-        super().__init__('groq', list((gpt_oss_20b, gpt_oss_120b, Qwen3_32b, llama_4_scout_17b_16e_instruct)), **kwargs)
+        super().__init__('groq', **kwargs)
         self._api_key = api_key
 
 
@@ -84,7 +53,7 @@ class GroqPlatform(Platform):
 
         try:
             chat_completion = client.chat.completions.create(
-                model=model.model_internal_name(),
+                model=model.internal_name(),
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": prompt}
@@ -117,7 +86,7 @@ class GroqPlatform(Platform):
 
         try:
             chat_completion = client.chat.completions.create(
-                model=model.model_internal_name(),
+                model=model.internal_name(),
                 messages=[
                     {
                         "role": "user",

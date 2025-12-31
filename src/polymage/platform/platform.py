@@ -3,32 +3,22 @@ from abc import ABC, abstractmethod
 from typing import List, Dict, Optional, Any
 from pydantic import BaseModel
 
-from ..model.model import Model
-from ..media.media import Media
-from ..media.image_media import ImageMedia
+from polymage.registry import ModelRegistry
+from polymage.model.model import Model
+from polymage.media.media import Media
+from polymage.media.image_media import ImageMedia
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
+
 class Platform(ABC):
-	def __init__(self, name: str, models: List[Model], **kwargs: Any) -> None:
-		self._name = name
-		self._models = models
+	def __init__(self, name: str, **kwargs: Any) -> None:
+		self._name = name.lower()
 
 
 	def platform_name(self) -> str:
 		return self._name
-
-
-	def platform_models(self) -> List[Model]:
-		return self._models
-
-
-	def getModelByName(self, name: str) -> Model:
-		for m in self.platform_models():
-			if m.model_name() == name:
-				return m
-		raise ValueError(f"Model {name} not found")
 
 
 	def text2text(self, model: str, prompt: str, media: Optional[List[Media]] = None,
@@ -47,7 +37,7 @@ class Platform(ABC):
             Any: Text response or structured data
         """
 		# get the model object for this platform
-		platform_model = self.getModelByName(model)
+		platform_model = ModelRegistry.getModelByName(model, self._name)
 		if response_model is None:
 			return self._text2text(platform_model, prompt, media=media, response_model=response_model, **kwargs)
 		# structured data output
@@ -78,7 +68,7 @@ class Platform(ABC):
         Returns:
             ImageMedia: Generated image media object
         """
-		platform_model = self.getModelByName(model)
+		platform_model = ModelRegistry.getModelByName(model, self._name)
 		return self._text2image(platform_model, prompt, **kwargs)
 
 	@abstractmethod
@@ -102,7 +92,7 @@ class Platform(ABC):
         Raises:
             ValueError: If media list is empty
         """
-		platform_model = self.getModelByName(model)
+		platform_model = ModelRegistry.getModelByName(model, self._name)
 		if not media:
 			raise ValueError("Media list cannot be empty")
 		return self._image2text(platform_model, prompt, media=media, **kwargs)
@@ -126,7 +116,7 @@ class Platform(ABC):
         Returns:
             ImageMedia: Transformed image media object
         """
-		platform_model = self.getModelByName(model)
+		platform_model = ModelRegistry.getModelByName(model, self._name)
 		if media is not None:
 			image = media[0]
 			return self._image2image(platform_model, prompt, media=image, **kwargs)
