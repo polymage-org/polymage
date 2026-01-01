@@ -6,10 +6,27 @@ variables:
   VERSION: '0.0.2'
 
 stages:
-  - test
   - scan
-# - build
-
+  - sync
 
 sast:
   stage: scan
+
+
+sync_to_remote:
+  stage: sync
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache git
+  script:
+    # 1. Configure the remote URL with credentials
+    - TARGET_REPO="https://oauth2:${TARGET_TOKEN}@${https://gitlab.com/polymage-org/polymage.git}"
+    
+    # 2. Add the target as a remote
+    - git remote add destination "$TARGET_REPO"
+    
+    # 3. Mirror the repository to the destination
+    # --mirror pushes all refs (branches, tags, etc.)
+    - git push --mirror destination
+  only:
+    - main  # Or whichever branch should trigger the sync
